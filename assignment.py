@@ -4,6 +4,8 @@
 import numpy as np
 import weka.core.jvm as jvm
 import weka.core.converters as converters
+import weka.plot.graph as graph 
+import weka.plot.classifiers as plcls
 from weka.filters import Filter
 from weka.core.converters import Loader, Saver
 from weka.classifiers import Classifier, PredictionOutput, Evaluation
@@ -70,14 +72,15 @@ def supFilters(data, fType, ops):
 	
 def naiveBayes(data):
 	
-	classifier = Classifier(classname="weka.classifiers.bayes.NaiveBayes")
-	nfolds=5
+	classifier = Classifier(classname="weka.classifiers.bayes.NaiveBayes", options=["-D"])
+	nfolds=13
 	rnd = Random(0)
 	evaluation = Evaluation(data)
 	evaluation.crossvalidate_model(classifier, data,
 	nfolds, rnd)
 	print(" Naive Bayes Cross-validation information")
 	print(evaluation.summary())
+	print("F-measure: " + str(evaluation.f_measure(1)))
 	print("==confusion matrix==")
 	print("     a     b")
 	print(evaluation.confusion_matrix)
@@ -90,20 +93,23 @@ def naiveBayes(data):
 	for item in evaluation.confusion_matrix:
 		f.write("%s\n" % item)
 	f.close() 
+	#plot roc graph
+	plcls.plot_roc(evaluation, title="Naive Bayes ROC", outfile="NBROC", wait=True)
 	
 	return evaluation.percent_correct
 	
 """IBK cross validation"""		
 def IBK(data):
 	
-	classifier = Classifier(classname="weka.classifiers.lazy.IBk")
-	nfolds=10
+	classifier = Classifier(classname="weka.classifiers.lazy.IBk", options=["-K", "5"])
+	nfolds=13
 	rnd = Random(0)
 	evaluation = Evaluation(data)
 	evaluation.crossvalidate_model(classifier, data,
 	nfolds, rnd)
 	print(" IBk Cross-validation information")
 	print(evaluation.summary())
+	print("F-measure: " + str(evaluation.f_measure(1)))
 	print("==confusion matrix==")
 	print("     a     b")
 	print(evaluation.confusion_matrix)
@@ -116,20 +122,24 @@ def IBK(data):
 	for item in evaluation.confusion_matrix:
 		f.write("%s\n" % item)
 	f.close() 
+	#plot roc graph
+	plcls.plot_roc(evaluation, title="IBk ROC", outfile="IBKROC", wait=True)
+	
 	
 	return evaluation.percent_correct
 
 """treeJ48 function"""	
 def treeJ48(data):
 	
-	classifier = Classifier(classname="weka.classifiers.trees.J48")
-	nfolds=6
+	classifier = Classifier(classname="weka.classifiers.trees.J48", options=["-B","-R", "-N", "13"])
+	nfolds=13
 	rnd = Random(0)
 	evaluation = Evaluation(data)
 	evaluation.crossvalidate_model(classifier, data,
 	nfolds, rnd)
 	print(" J48 Tree Cross-validation information")
-	print(evaluation.summary())	
+	print(evaluation.summary())
+	print("F-measure: " + str(evaluation.f_measure(1)))
 	print("==confusion matrix==")
 	print("     a     b")
 	print(evaluation.confusion_matrix)
@@ -142,31 +152,49 @@ def treeJ48(data):
 	for item in evaluation.confusion_matrix:
 		f.write("%s\n" % item)
 	f.close() 
+	#plot roc graph
+	plcls.plot_roc(evaluation, title="J48 ROC", outfile="J48ROC", wait=True)
 
 	return evaluation.percent_correct
 	
 def trainAndMakePred(train, test):
-	classifier = Classifier(classname="weka.classifiers.lazy.IBk")
-	classifier.build_classifier(train)
-	evaluation = Evaluation(train)
-	predicted_labels = evaluation.test_model(classifier, train)
+	#IBK test and prediction 
+	classifierIBK = Classifier(classname="weka.classifiers.lazy.IBk", options=["-K", "5"])
+	classifierIBK.build_classifier(train)
+	evaluationIBK = Evaluation(train)
+	predicted_labelsIBK = evaluationIBK.test_model(classifierIBK, train)
 	print(" IBKTraining information ")
-	print(evaluation.summary())
-	pred_output = PredictionOutput(classname="weka.classifiers.evaluation.output.prediction.CSV")
-	evaluation = Evaluation(test)
-	predicted_indices = evaluation.test_model(classifier, test, pred_output)
-	print(" IBKPrediction information ")
-	print(pred_output)
+	print(evaluationIBK.summary())
+	pred_outputIBK = PredictionOutput(classname="weka.classifiers.evaluation.output.prediction.CSV")
+	evaluationIBK = Evaluation(test)
+	predicted_indicesIBK = evaluationIBK.test_model(classifierIBK, test, pred_outputIBK)
+	print(" IBK Prediction information ")
+	print(pred_outputIBK)
+	
+	#Naive bayes and prediction
+	classifierNB = Classifier(classname="weka.classifiers.bayes.NaiveBayes", options=["-D"])
+	classifierNB.build_classifier(train)
+	evaluationNB = Evaluation(train)
+	predicted_labelsNB = evaluationNB.test_model(classifierNB, train)
+	print(" Naive Bayes Training information ")
+	print(evaluationNB.summary())
+	pred_outputNB = PredictionOutput(classname="weka.classifiers.evaluation.output.prediction.CSV")
+	evaluationNB = Evaluation(test)
+	predicted_indicesNB = evaluationNB.test_model(classifierNB, test, pred_outputNB)
+	print(" Naive Bayes Prediction information ")
+	print(pred_outputNB)
+	
+	#out put predictions to file
 	a = 1
 	ID = 901
 	f = open("prediction.csv", "w")
-	f.write("ID,Predict 1\n")
-	for item in predicted_indices:
-		f.write("%s,%s\n" % (ID,item))
+	f.write("ID,Predict 1,Predict 2\n")
+	for pred1, pred2 in zip(predicted_indicesIBK, predicted_indicesNB):
+		f.write("%s,%s,%s\n" % (ID,pred1,pred2))
 		ID += 1
 	f.close() 
 	
-	return predicted_labels
+	#return predicted_labels
 	
 
 
