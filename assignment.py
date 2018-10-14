@@ -1,6 +1,7 @@
 """	Author: Kei Sum Wang -id:19126089
 	Data mining COMP3009 assignment
 """
+# reference: http://fracpete.github.io/python-weka-wrapper/api.html
 import numpy as np
 import weka.core.jvm as jvm
 import weka.core.converters as converters
