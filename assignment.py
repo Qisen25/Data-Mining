@@ -76,31 +76,98 @@ def naiveBayes(data):
 	evaluation = Evaluation(data)
 	evaluation.crossvalidate_model(classifier, data,
 	nfolds, rnd)
-	print(" Cross-validation information")
+	print(" Naive Bayes Cross-validation information")
 	print(evaluation.summary())
+	print("==confusion matrix==")
+	print("     a     b")
+	print(evaluation.confusion_matrix)
+	print
+	f = open("naiveeval.txt", "w")
+	f.write(evaluation.summary()) 
+	f.write("\n")
+	f.write("==confusion matrix==\n")
+	f.write("     a       b\n")
+	for item in evaluation.confusion_matrix:
+		f.write("%s\n" % item)
+	f.close() 
 	
-		
+	return evaluation.percent_correct
+	
+"""IBK cross validation"""		
 def IBK(data):
 	
 	classifier = Classifier(classname="weka.classifiers.lazy.IBk")
-	nfolds=5
+	nfolds=10
 	rnd = Random(0)
 	evaluation = Evaluation(data)
 	evaluation.crossvalidate_model(classifier, data,
 	nfolds, rnd)
-	print(" Cross-validation information")
+	print(" IBk Cross-validation information")
 	print(evaluation.summary())
+	print("==confusion matrix==")
+	print("     a     b")
+	print(evaluation.confusion_matrix)
+	print
+	f = open("IBKeval.txt", "w")
+	f.write(evaluation.summary()) 
+	f.write("\n")
+	f.write("==confusion matrix==\n")
+	f.write("     a       b\n")
+	for item in evaluation.confusion_matrix:
+		f.write("%s\n" % item)
+	f.close() 
 	
+	return evaluation.percent_correct
+
+"""treeJ48 function"""	
 def treeJ48(data):
 	
 	classifier = Classifier(classname="weka.classifiers.trees.J48")
-	nfolds=5
+	nfolds=6
 	rnd = Random(0)
 	evaluation = Evaluation(data)
 	evaluation.crossvalidate_model(classifier, data,
 	nfolds, rnd)
-	print(" Cross-validation information")
+	print(" J48 Tree Cross-validation information")
 	print(evaluation.summary())	
+	print("==confusion matrix==")
+	print("     a     b")
+	print(evaluation.confusion_matrix)
+	print
+	f = open("J48eval.txt", "w")
+	f.write(evaluation.summary()) 
+	f.write("\n")
+	f.write("==confusion matrix==\n")
+	f.write("     a       b\n")
+	for item in evaluation.confusion_matrix:
+		f.write("%s\n" % item)
+	f.close() 
+
+	return evaluation.percent_correct
+	
+def trainAndMakePred(train, test):
+	classifier = Classifier(classname="weka.classifiers.lazy.IBk")
+	classifier.build_classifier(train)
+	evaluation = Evaluation(train)
+	predicted_labels = evaluation.test_model(classifier, train)
+	print(" IBKTraining information ")
+	print(evaluation.summary())
+	pred_output = PredictionOutput(classname="weka.classifiers.evaluation.output.prediction.CSV")
+	evaluation = Evaluation(test)
+	predicted_indices = evaluation.test_model(classifier, test, pred_output)
+	print(" IBKPrediction information ")
+	print(pred_output)
+	a = 1
+	ID = 901
+	f = open("prediction.csv", "w")
+	f.write("ID,Predict 1\n")
+	for item in predicted_indices:
+		f.write("%s,%s\n" % (ID,item))
+		ID += 1
+	f.close() 
+	
+	return predicted_labels
+	
 
 
 """function to prepare test and train"""	
@@ -133,12 +200,15 @@ def preparation():
 		saver.save_file(train, "train.arff")
 		
 		#Performing cross validation using naiveBayes, IBk and j48 tree
-		print("Naive Bayes")
-		naiveBayes(train)
-		print("IBK")
-		IBK(train)
-		print("J48 tree")
-		treeJ48(train)
+		#get the accuracy of the cross validation and store all in an array
+		accuracyArray = [naiveBayes(train), IBK(train), treeJ48(train)]
+		mostAccurate = max(accuracyArray)#find most accurate
+		print(mostAccurate)
+		accuracyArray.remove(mostAccurate)
+		secondAcc = max(accuracyArray)#get second accurate
+		print(secondAcc)
+		trainAndMakePred(train, test)
+		#makePrediction(test)
 		
 		print("Data loaded successfully")
 	except IOError:
