@@ -49,7 +49,7 @@ def notDistinct(data):
 			strang += str(attribute.index+1) + ','
 
 	strang = strang[:-1] #remove last comma from string
-	print(strang)
+	#print(strang)
 	
 	return strang
 
@@ -81,11 +81,14 @@ def naiveBayes(data):
 	nfolds, rnd)
 	print(" Naive Bayes Cross-validation information")
 	print(evaluation.summary())
+	print("precision: " + str(evaluation.precision(1)))
+	print("recall: " + str(evaluation.recall(1)))
 	print("F-measure: " + str(evaluation.f_measure(1)))
 	print("==confusion matrix==")
 	print("     a     b")
 	print(evaluation.confusion_matrix)
 	print
+	#write to file
 	f = open("naiveeval.txt", "w")
 	f.write(evaluation.summary()) 
 	f.write("\n")
@@ -110,11 +113,14 @@ def IBK(data):
 	nfolds, rnd)
 	print(" IBk Cross-validation information")
 	print(evaluation.summary())
+	print("precision: " + str(evaluation.precision(1)))
+	print("recall: " + str(evaluation.recall(1)))
 	print("F-measure: " + str(evaluation.f_measure(1)))
 	print("==confusion matrix==")
 	print("     a     b")
 	print(evaluation.confusion_matrix)
 	print
+	#write to file
 	f = open("IBKeval.txt", "w")
 	f.write(evaluation.summary()) 
 	f.write("\n")
@@ -140,11 +146,14 @@ def treeJ48(data):
 	nfolds, rnd)
 	print(" J48 Tree Cross-validation information")
 	print(evaluation.summary())
+	print("precision: " + str(evaluation.precision(1)))
+	print("recall: " + str(evaluation.recall(1)))
 	print("F-measure: " + str(evaluation.f_measure(1)))
 	print("==confusion matrix==")
 	print("     a     b")
 	print(evaluation.confusion_matrix)
 	print
+	#write to file
 	f = open("J48eval.txt", "w")
 	f.write(evaluation.summary()) 
 	f.write("\n")
@@ -188,7 +197,7 @@ def trainAndMakePred(train, test):
 	#out put predictions to file
 	a = 1
 	ID = 901
-	f = open("prediction.csv", "w")
+	f = open("predict.csv", "w")
 	f.write("ID,Predict 1,Predict 2\n")
 	for pred1, pred2 in zip(predicted_indicesIBK, predicted_indicesNB):
 		f.write("%s,%s,%s\n" % (ID,pred1,pred2))
